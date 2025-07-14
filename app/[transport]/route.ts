@@ -5,9 +5,9 @@ const handler = createMcpHandler(
   async (server) => {
     server.tool(
       "echo",
-      "description",
+      "Echo a message",
       {
-        message: z.string(),
+        message: z.string().describe("The message to echo"),
       },
       async ({ message }) => ({
         content: [{ type: "text", text: `Tool echo: ${message}` }],
@@ -19,6 +19,9 @@ const handler = createMcpHandler(
       tools: {
         echo: {
           description: "Echo a message",
+        },
+        count_character: {
+          description: "Count occurrences of a character in a string",
         },
       },
     },
