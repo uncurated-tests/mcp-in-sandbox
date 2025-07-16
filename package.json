@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build-claude-code-do-not-use": "next build",
-    "start": "next start"
+    "build": "node test-mcp-server.js"
   },
   "dependencies": {
     "@vercel/mcp-adapter": "0.8.2",
