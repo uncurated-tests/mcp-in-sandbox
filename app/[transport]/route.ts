@@ -41,6 +41,32 @@ const handler = createMcpHandler(
     );
 
     server.tool(
+      "calculate_sha256",
+      "Calculate the SHA256 hash of a given string input",
+      {
+        input: z.string().describe("The input string to calculate SHA256 hash for. Works with any string including special characters, numbers, and Unicode characters. Example: 'hello world' would produce 'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9'"),
+      },
+      async ({ input }) => {
+        const hash = createHash('sha256');
+        hash.update(input, 'utf8');
+        const sha256Hash = hash.digest('hex');
+        
+        return {
+          content: [
+            { 
+              type: "text", 
+              text: `SHA256 hash of "${input}": ${sha256Hash}` 
+            }
+          ],
+          hash: sha256Hash,
+          input: input,
+          algorithm: "sha256",
+          encoding: "utf8"
+        };
+      }
+    );
+
+    server.tool(
       "get_population_data",
       "Get current population data for a country from REST Countries API",
       {
@@ -288,6 +314,9 @@ const handler = createMcpHandler(
         },
         calculate_sha1: {
           description: "Calculate the SHA1 hash of a given string input. Useful for creating checksums, verifying data integrity, or generating unique identifiers. Takes any string input and returns the SHA1 hash in hexadecimal format.",
+        },
+        calculate_sha256: {
+          description: "Calculate the SHA256 hash of a given string input. More secure than SHA1, useful for creating checksums, verifying data integrity, password hashing, or generating unique identifiers. Takes any string input including special characters, numbers, and Unicode characters, and returns the SHA256 hash in hexadecimal format.",
         },
         get_population_data: {
           description: "Get current population data for any country from REST Countries API. Takes a country name (full name, common name, or ISO code) and returns comprehensive population and country information including population count, official name, capital, region, and subregion. Useful for demographic research, country comparisons, and accessing up-to-date population statistics.",

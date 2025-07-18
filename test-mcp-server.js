@@ -107,6 +107,27 @@ async function testMCPServer() {
       } else {
         console.log('⚠ count_letter_occurrences tool not found in available tools');
       }
+      
+      // Test 6: Call calculate_sha256 if available
+      const sha256Tool = toolsResponse.result.tools.find(tool => tool.name === 'calculate_sha256');
+      if (sha256Tool) {
+        const sha256Response = await makeRequest('POST', hostname, port, path, {
+          jsonrpc: '2.0',
+          id: 6,
+          method: 'tools/call',
+          params: {
+            name: 'calculate_sha256',
+            arguments: {
+              input: 'hello world'
+            }
+          }
+        });
+        
+        console.log('✓ Successfully called calculate_sha256 tool');
+        console.log('SHA256 response:', JSON.stringify(sha256Response, null, 2));
+      } else {
+        console.log('⚠ calculate_sha256 tool not found in available tools');
+      }
     }
     
     console.log('\n✅ All tests passed! MCP server is working correctly.');
