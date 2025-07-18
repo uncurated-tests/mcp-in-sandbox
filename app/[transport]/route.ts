@@ -117,15 +117,16 @@ const handler = createMcpHandler(
             timestamp: new Date().toISOString()
           };
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           return {
             content: [
               { 
                 type: "text", 
-                text: `Error fetching population data for "${country}": ${error.message}. Please try again or verify the country name.` 
+                text: `Error fetching population data for "${country}": ${errorMessage}. Please try again or verify the country name.` 
               }
             ],
             success: false,
-            error: error.message
+            error: errorMessage
           };
         }
       }
@@ -197,15 +198,80 @@ const handler = createMcpHandler(
             timestamp: new Date().toISOString()
           };
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
           return {
             content: [
               { 
                 type: "text", 
-                text: `Error calculating mortgage payment: ${error.message}. Please check your input values and try again.` 
+                text: `Error calculating mortgage payment: ${errorMessage}. Please check your input values and try again.` 
               }
             ],
             success: false,
-            error: error.message
+            error: errorMessage
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "count_letter_occurrences",
+      "Count the exact number of occurrences of a specific letter in a given string with case-insensitive matching, returning both the count and positions for verification",
+      {
+        text: z.string().describe("The text string to search in. Example: 'Hello World' - can contain any characters including spaces, punctuation, and numbers"),
+        letter: z.string().length(1).describe("The single letter to count (case-insensitive). Example: 'l' to count both 'l' and 'L' occurrences. Must be exactly one character"),
+      },
+      async ({ text, letter }) => {
+        try {
+          // Convert both text and letter to lowercase for case-insensitive matching
+          const lowerText = text.toLowerCase();
+          const lowerLetter = letter.toLowerCase();
+          
+          // Find all positions where the letter occurs
+          const positions: number[] = [];
+          let count = 0;
+          
+          for (let i = 0; i < lowerText.length; i++) {
+            if (lowerText[i] === lowerLetter) {
+              positions.push(i);
+              count++;
+            }
+          }
+          
+          // Create a visual representation showing the matches
+          const visualRepresentation = text.split('').map((char, index) => {
+            return positions.includes(index) ? char.toUpperCase() : char;
+          }).join('');
+          
+          return {
+            content: [
+              { 
+                type: "text", 
+                text: `Letter Count Results:\n\nText: "${text}"\nLetter to count: "${letter}" (case-insensitive)\n\nTotal occurrences: ${count}\nPositions: ${positions.length > 0 ? positions.join(', ') : 'none'}\n\nVisualization (matches in uppercase):\n"${visualRepresentation}"\n\nNote: Position counting starts from 0. Case-insensitive matching finds both uppercase and lowercase versions of the letter.` 
+              }
+            ],
+            success: true,
+            analysis: {
+              originalText: text,
+              targetLetter: letter,
+              caseSensitive: false,
+              totalCount: count,
+              positions: positions,
+              textLength: text.length,
+              visualRepresentation: visualRepresentation
+            },
+            timestamp: new Date().toISOString()
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          return {
+            content: [
+              { 
+                type: "text", 
+                text: `Error counting letter occurrences: ${errorMessage}. Please check your input values and try again.` 
+              }
+            ],
+            success: false,
+            error: errorMessage
           };
         }
       }
@@ -217,8 +283,8 @@ const handler = createMcpHandler(
         echo: {
           description: "Echo a message",
         },
-        count_character: {
-          description: "Count occurrences of a character in a string",
+        count_letter_occurrences: {
+          description: "Count the exact number of occurrences of a specific letter in a given string with case-insensitive matching, returning both the count and positions for verification. Useful for text analysis, pattern detection, and character frequency analysis.",
         },
         calculate_sha1: {
           description: "Calculate the SHA1 hash of a given string input. Useful for creating checksums, verifying data integrity, or generating unique identifiers. Takes any string input and returns the SHA1 hash in hexadecimal format.",

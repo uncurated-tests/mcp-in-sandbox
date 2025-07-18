@@ -85,6 +85,28 @@ async function testMCPServer() {
       } else {
         console.log('⚠ Mortgage payment calculator tool not found in available tools');
       }
+      
+      // Test 5: Call count_letter_occurrences if available
+      const letterCountTool = toolsResponse.result.tools.find(tool => tool.name === 'count_letter_occurrences');
+      if (letterCountTool) {
+        const letterCountResponse = await makeRequest('POST', hostname, port, path, {
+          jsonrpc: '2.0',
+          id: 5,
+          method: 'tools/call',
+          params: {
+            name: 'count_letter_occurrences',
+            arguments: {
+              text: 'Hello World! This is a test string with multiple letters.',
+              letter: 'l'
+            }
+          }
+        });
+        
+        console.log('✓ Successfully called count_letter_occurrences tool');
+        console.log('Letter count response:', JSON.stringify(letterCountResponse, null, 2));
+      } else {
+        console.log('⚠ count_letter_occurrences tool not found in available tools');
+      }
     }
     
     console.log('\n✅ All tests passed! MCP server is working correctly.');
