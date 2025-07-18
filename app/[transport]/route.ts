@@ -130,6 +130,86 @@ const handler = createMcpHandler(
         }
       }
     );
+
+    server.tool(
+      "calculate_mortgage_payment",
+      "Calculate monthly mortgage payment using the standard mortgage payment formula",
+      {
+        loanAmount: z.number().positive().describe("The loan amount in dollars. Example: 300000 for a $300,000 loan"),
+        annualInterestRate: z.number().min(0).describe("The annual interest rate as a percentage. Example: 6.5 for 6.5% annual interest rate, or 0 for 0% interest"),
+        loanTermYears: z.number().int().positive().describe("The loan term in years. Example: 30 for a 30-year mortgage"),
+      },
+      async ({ loanAmount, annualInterestRate, loanTermYears }) => {
+        try {
+          // Convert annual interest rate to monthly rate (divide by 12 and convert percentage to decimal)
+          const monthlyInterestRate = (annualInterestRate / 100) / 12;
+          
+          // Convert loan term to number of months
+          const numberOfPayments = loanTermYears * 12;
+          
+          // Calculate monthly payment using the standard mortgage payment formula:
+          // M = P * [r(1 + r)^n] / [(1 + r)^n - 1]
+          // Where: M = Monthly payment, P = Principal loan amount, r = Monthly interest rate, n = Number of payments
+          
+          let monthlyPayment: number;
+          
+          if (monthlyInterestRate === 0) {
+            // Special case: 0% interest rate
+            monthlyPayment = loanAmount / numberOfPayments;
+          } else {
+            const numerator = loanAmount * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfPayments);
+            const denominator = Math.pow(1 + monthlyInterestRate, numberOfPayments) - 1;
+            monthlyPayment = numerator / denominator;
+          }
+          
+          // Calculate total amount paid over the life of the loan
+          const totalAmountPaid = monthlyPayment * numberOfPayments;
+          
+          // Calculate total interest paid
+          const totalInterest = totalAmountPaid - loanAmount;
+          
+          // Format currency values
+          const formatCurrency = (amount: number) => 
+            new Intl.NumberFormat('en-US', { 
+              style: 'currency', 
+              currency: 'USD' 
+            }).format(amount);
+          
+          return {
+            content: [
+              { 
+                type: "text", 
+                text: `Mortgage Payment Calculation:\n\nLoan Amount: ${formatCurrency(loanAmount)}\nAnnual Interest Rate: ${annualInterestRate}%\nLoan Term: ${loanTermYears} years\n\nMonthly Payment: ${formatCurrency(monthlyPayment)}\nTotal Amount Paid: ${formatCurrency(totalAmountPaid)}\nTotal Interest Paid: ${formatCurrency(totalInterest)}\n\nThis calculation uses the standard mortgage payment formula and assumes a fixed interest rate throughout the loan term.` 
+              }
+            ],
+            success: true,
+            calculation: {
+              loanAmount,
+              annualInterestRate,
+              loanTermYears,
+              monthlyPayment: Math.round(monthlyPayment * 100) / 100,
+              totalAmountPaid: Math.round(totalAmountPaid * 100) / 100,
+              totalInterest: Math.round(totalInterest * 100) / 100,
+              monthlyInterestRate: Math.round(monthlyInterestRate * 10000) / 10000,
+              numberOfPayments
+            },
+            formula: "M = P * [r(1 + r)^n] / [(1 + r)^n - 1]",
+            timestamp: new Date().toISOString()
+          };
+        } catch (error) {
+          return {
+            content: [
+              { 
+                type: "text", 
+                text: `Error calculating mortgage payment: ${error.message}. Please check your input values and try again.` 
+              }
+            ],
+            success: false,
+            error: error.message
+          };
+        }
+      }
+    );
   },
   {
     capabilities: {
@@ -145,6 +225,9 @@ const handler = createMcpHandler(
         },
         get_population_data: {
           description: "Get current population data for any country from REST Countries API. Takes a country name (full name, common name, or ISO code) and returns comprehensive population and country information including population count, official name, capital, region, and subregion. Useful for demographic research, country comparisons, and accessing up-to-date population statistics.",
+        },
+        calculate_mortgage_payment: {
+          description: "Calculate monthly mortgage payment using the standard mortgage payment formula. Takes loan amount, annual interest rate (as percentage), and loan term in years. Returns monthly payment amount, total amount paid, and total interest paid. Uses the formula M = P * [r(1 + r)^n] / [(1 + r)^n - 1]. Useful for mortgage planning, loan comparisons, and financial planning.",
         },
       },
     },

@@ -62,6 +62,29 @@ async function testMCPServer() {
       } else {
         console.log('⚠ Echo tool not found in available tools');
       }
+      
+      // Test 4: Call mortgage payment calculator if available
+      const mortgageTool = toolsResponse.result.tools.find(tool => tool.name === 'calculate_mortgage_payment');
+      if (mortgageTool) {
+        const mortgageResponse = await makeRequest('POST', hostname, port, path, {
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'tools/call',
+          params: {
+            name: 'calculate_mortgage_payment',
+            arguments: {
+              loanAmount: 300000,
+              annualInterestRate: 6.5,
+              loanTermYears: 30
+            }
+          }
+        });
+        
+        console.log('✓ Successfully called mortgage payment calculator');
+        console.log('Mortgage calculation response:', JSON.stringify(mortgageResponse, null, 2));
+      } else {
+        console.log('⚠ Mortgage payment calculator tool not found in available tools');
+      }
     }
     
     console.log('\n✅ All tests passed! MCP server is working correctly.');
@@ -83,6 +106,7 @@ function makeRequest(method, hostname, port, path, data) {
       method,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json, text/event-stream',
         'Content-Length': Buffer.byteLength(postData)
       }
     };
